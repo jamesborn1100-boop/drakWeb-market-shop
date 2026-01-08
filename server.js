@@ -33,7 +33,6 @@ app.post('/api/products', (req, res) => {
     res.json({ message: "Success", product: newProduct });
 });
 
-// ບ່ອນຮັບການນັບ View (ຕ້ອງມີເພື່ອໃຫ້ index.html ບໍ່ Error)
 app.post('/api/products/:id/view', (req, res) => {
     const products = readData();
     const productIndex = products.findIndex(p => p.id == req.params.id);
@@ -46,7 +45,8 @@ app.post('/api/products/:id/view', (req, res) => {
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+// ແກ້ໄຂຈຸດນີ້: ໃຫ້ Render ເລືອກ Port ເອງ ແລະ ຕັ້ງ Host ເປັນ 0.0.0.0
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server is running on port ${PORT}`);
 });
