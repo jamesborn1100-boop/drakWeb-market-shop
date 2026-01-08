@@ -20,7 +20,6 @@
             --text-gray: #888;
         }
 
-        /* Basic Setup with Noto Sans Lao */
         * { 
             margin: 0; 
             padding: 0; 
@@ -36,7 +35,6 @@
             z-index: -1; 
         }
 
-        /* Sidebar Navigation */
         .sidebar { 
             position: fixed; left: 0; top: 0; height: 100vh; width: 80px; 
             background: rgba(0, 0, 0, 0.95); border-right: 1px solid #222; 
@@ -76,34 +74,22 @@
             to { opacity: 1; transform: translateY(0); } 
         }
 
-        /* --- Featured Card (Rank #1) --- */
         #featured-display { margin-bottom: 40px; }
         .featured-card {
-            background: #111;
-            border-radius: 35px;
-            padding: 30px;
-            display: flex;
-            align-items: center;
-            gap: 30px;
-            position: relative;
-            border: 2px solid var(--neon-pink);
-            max-width: 650px;
-            cursor: pointer;
-            transition: 0.4s;
+            background: #111; border-radius: 35px; padding: 30px; display: flex;
+            align-items: center; gap: 30px; position: relative; border: 2px solid var(--neon-pink);
+            max-width: 650px; cursor: pointer; transition: 0.4s;
         }
         .featured-card:hover { transform: scale(1.02); box-shadow: 0 0 30px rgba(255,0,255,0.2); }
         .popular-badge {
-            position: absolute; top: -12px; right: 40px;
-            background: #ff00ff; color: white;
-            padding: 6px 15px; border-radius: 20px;
-            font-weight: 900; font-size: 11px;
+            position: absolute; top: -12px; right: 40px; background: #ff00ff; color: white;
+            padding: 6px 15px; border-radius: 20px; font-weight: 900; font-size: 11px;
             box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
         }
         .featured-img { width: 160px; height: 160px; object-fit: cover; border-radius: 25px; background: #1a1a1a; }
         .featured-info h2 { font-size: 26px; line-height: 1.2; margin-bottom: 10px; }
         .featured-info p { font-size: 22px; font-weight: bold; color: var(--neon-green); }
 
-        /* Market Grid */
         .market-grid { 
             display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
             gap: 25px; margin-top: 20px; 
@@ -120,7 +106,6 @@
         .product-card h3 { margin: 15px 0 5px; font-size: 18px; font-weight: 600; }
         .product-card .price { color: var(--neon-green); font-weight: bold; font-size: 20px; }
 
-        /* Dashboard UI */
         .seller-container { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; }
         .glass-panel { 
             background: rgba(255,255,255,0.02); border: 1px solid #222; 
@@ -145,7 +130,6 @@
             border: none; border-radius: 12px; font-weight: bold; font-size: 18px; cursor: pointer;
         }
 
-        /* View Store Modal */
         .store-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 3000;
@@ -256,28 +240,35 @@
     </div>
 
     <script>
+        // --- ຕັ້ງຄ່າລິ້ງ API ໃຫ້ຖືກຕ້ອງ ---
+        const API_BASE = "https://drakweb-market-shop.onrender.com";
         let allProducts = [];
 
         // 1. Fetch Data from Server
         async function loadMarketData() {
             try {
-                const response = await fetch('https://drakweb-market-shop.onrender.com/api/products')
+                const response = await fetch(`${API_BASE}/api/products`);
                 allProducts = await response.json();
                 renderMarket(allProducts);
             } catch (err) {
-                console.log("Server error, using local data.");
+                console.log("Server error or sleep mode. Retrying...");
+                setTimeout(loadMarketData, 3000); // ຖ້າບໍ່ໄດ້ ໃຫ້ລອງໃໝ່ທຸກ 3 ວິ
             }
         }
 
-        // 2. Render Products with Ranking
+        // 2. Render Products
         function renderMarket(data) {
             const container = document.getElementById('market-display');
             const featuredContainer = document.getElementById('featured-display');
             container.innerHTML = '';
+            featuredContainer.innerHTML = '';
             
-            if(data.length === 0) return;
+            if(!data || data.length === 0) {
+                document.getElementById('user-p-count').innerText = 0;
+                return;
+            }
 
-            // Render Rank #1 (Featured)
+            // Render Rank #1
             const top = data[0];
             featuredContainer.innerHTML = `
                 <div class="featured-card" onclick="viewStore(${top.id})">
@@ -292,7 +283,7 @@
             `;
 
             // Render Others
-            data.forEach((item, index) => {
+            data.forEach((item) => {
                 container.innerHTML += `
                     <div class="product-card" onclick="viewStore(${item.id})">
                         <img src="${item.img}">
@@ -305,15 +296,15 @@
             document.getElementById('user-p-count').innerText = data.length;
         }
 
-        // 3. View Store Modal & Increase View
+        // 3. View Store & Increase View
         async function viewStore(id) {
             const store = allProducts.find(p => p.id == id);
             if(!store) return;
 
-            // ຍິງ API ໄປນັບຍອດ View ຢູ່ Server
+            // ຍິງ API ໄປນັບ View ຢູ່ Server
             try {
-                await fetch(`http://localhost:3000/api/products/${id}/view`, { method: 'POST' });
-                store.views = (store.views || 0) + 1; // Update UI Local
+                await fetch(`${API_BASE}/api/products/${id}/view`, { method: 'POST' });
+                store.views = (store.views || 0) + 1;
             } catch(e) {}
 
             const modalHTML = `
@@ -323,14 +314,10 @@
                         <img src="${store.img}" style="width:100%; height:250px; object-fit:cover; border-radius:20px;">
                         <h2 style="margin:20px 0 10px 0;">${store.name}</h2>
                         <p style="color:var(--neon-green); font-size:24px; font-weight:bold;">${store.price} KIP</p>
-                        
                         <a href="https://wa.me/856${store.wa.replace(/\s/g, '')}" target="_blank" class="modal-btn" style="background:#25D366; color:white;">
                             💬 ຕິດຕໍ່ WhatsApp
                         </a>
-                        ${store.fb ? `
-                        <a href="${store.fb}" target="_blank" class="modal-btn" style="background:#1877F2; color:white;">
-                            🔵 ເບິ່ງ Facebook
-                        </a>` : ''}
+                        ${store.fb ? `<a href="${store.fb}" target="_blank" class="modal-btn" style="background:#1877F2; color:white;">🔵 ເບິ່ງ Facebook</a>` : ''}
                     </div>
                 </div>
             `;
@@ -340,10 +327,10 @@
         function closeStore() {
             const m = document.getElementById('modal-container');
             if(m) m.remove();
-            loadMarketData(); // Refresh Views on UI
+            loadMarketData();
         }
 
-        // 4. Publish Logic
+        // 4. Publish Logic (POST ກັບໄປຫາ Render)
         async function handlePublish() {
             const name = document.getElementById('p-name').value;
             const price = document.getElementById('p-price').value;
@@ -365,7 +352,7 @@
             };
 
             try {
-                const res = await fetch('http://localhost:3000/api/products', {
+                const res = await fetch(`${API_BASE}/api/products`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
@@ -374,10 +361,12 @@
                     alert("ລົງຮ້ານສຳເລັດ!");
                     location.reload();
                 }
-            } catch(e) { alert("Server ບໍ່ຕອບສະໜອງ"); }
+            } catch(e) { 
+                alert("Server ພວມຕື່ນ... ກະລຸນາລໍຖ້າ 30 ວິນາທີແລ້ວລອງໃໝ່"); 
+            }
         }
 
-        // Camera Preview Logic
+        // Camera Preview
         document.getElementById('camera-input').addEventListener('change', function() {
             const file = this.files[0];
             if(file) {
@@ -404,7 +393,7 @@
             renderMarket(f);
         }
 
-        // Initial Start
+        // ເລີ່ມຕົ້ນໂຫລດຂໍ້ມູນ
         loadMarketData();
     </script>
 </body>
