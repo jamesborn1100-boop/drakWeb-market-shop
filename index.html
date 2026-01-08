@@ -261,7 +261,7 @@
         // 1. Fetch Data from Server
         async function loadMarketData() {
             try {
-                const response = await fetch('http://localhost:3000/api/products');
+                const response = await fetch('https://drakweb-market-shop.onrender.com/api/products')
                 allProducts = await response.json();
                 renderMarket(allProducts);
             } catch (err) {
@@ -408,4 +408,5 @@
         loadMarketData();
     </script>
 </body>
+
 </html>
